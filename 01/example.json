@@ -1,0 +1,16 @@
+{
+	"settings": {
+		"water_cup_size": 250,
+		"coffee_cup_size": 300
+	},
+	"last_meal": {
+		"name": "점심",
+		"time": "2026-05-14 12:00"
+	},
+	"daily_total": {
+		"water_ml": 500,
+		"caffeine_mg": 150,
+		"last_update": "2026-05-14 15:00"
+	}
+}
+	

@@ -1,0 +1,15 @@
+{
+    "username": "sophia",
+    "meals": [
+        {
+            "food": "닭강정",
+            "time": "02시 29분"
+        },
+        {
+            "food": "감자튀김",
+            "time": "02시 37분"
+        }
+    ],
+    "water": 3,
+    "coffee": 4
+}
