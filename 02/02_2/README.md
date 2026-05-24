@@ -2,6 +2,7 @@
 핵심 기술:
 
 ## 프로젝트 구조
+``` text
 🎁 02
 ┗ 📦 02_2
   ┣ 📂 routers
@@ -11,6 +12,7 @@
   ┣ 📄 main.py
   ┣ 📄 models.py
   ┗ 📄 web_project.db
+```
 
 ## 설치 및 실행 방법
 ``` ruby
