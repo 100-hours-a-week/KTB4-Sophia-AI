@@ -1,0 +1,15 @@
+<body>
+    <img src="https://third-party-test.glitch.me/check.svg", alt="이미지">
+
+    <script>
+        fetch('https://third-party-test.glitch.me/check.svg')
+            .then(response => response.blob())
+            .then(imgBlob => {
+                const imageObjectURL = URL.createObjectURL(imgBlob);
+                const img = document.createElement('img');
+                img.src = imageObjectURL;
+                document.body.append(img);
+            })
+    </script>
+    <script src="client.js"></script>
+</body>

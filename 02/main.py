@@ -27,9 +27,10 @@ def generate_summary(content: str):
 def create_post(post: PostCreate):
     # Ollama로 요약본 만들기
     summary = generate_summary(post.content)
-
     # DB 연결
+    # conn: DB의 문을 여는 행위
     conn = sqlite3.connect("web_project.db")
+    # cursor: 동작 수행
     cursor = conn.cursor()
 
     # DB에 저장 (post 변수에서 데이터 꺼내서 SQL에 넣기)
@@ -48,24 +49,114 @@ def create_post(post: PostCreate):
 @app.get("/posts")
 # str = None: nickname을 입력하지 않아도 됨
 def read_post_by_nickname(nickname: str = None):
+    # DB 연결
+    conn = sqlite3.connect("web_project.db")
+    # 데이터를 이름으로 꺼내기 위해서 하는 설정
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
     # nickname이 없으면 전체 글을 보여줌
     if nickname is None:
-        return posts
-    # 검색 결과 담는 리스트
-    result = []
-    # posts 안의 각각의 글인 p
-    for p in posts:
-        # p라는 글의 nickname이 내가 찾는 nickname이라면
-        if p.nickname == nickname:
-            # result 리스트에 글을 추가
-            result.append(p)
-    return result
+        cursor.execute("SELECT * FROM posts")
+        rows = cursor.fetchall()
+    else: # posts에서 닉네임이 ?인 데이터만 고르기
+        # ,를 찍어서 값이 하나인 튜플임을 명시
+        cursor.execute("SELECT * FROM posts WHERE nickname = ?", (nickname,))
+        # rows 변수에 방금 수행한 결과를 모두 담기
+        rows = cursor.fetchall()
+
+        # 검색했는데 해당 닉네임으로 쓰인 글이 없을때
+        if len(rows) == 0:
+            conn.close()
+            return {"message": "해당하는 닉네임의 글이 없습니다."}
+    
+    # DB와의 연결 끊기
+    conn.close()
+
+    # DB에서 가져온 데이터를 딕셔너리 리스트로 변환
+    return [dict(row) for row in rows]
 
 @app.get("/posts/{post_id}")
 def read_post_by_id(post_id: int):
+    conn = sqlite3.connect("web_project.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
     # 가독성을 위해 posts라고 하기
-    for post in posts:
-        if post.id == post_id:
-            # 파이썬의 성질: return 실행하면 함수 종료
-            return post
-    return {"message": "해당하는 글이 없습니다."}
+    cursor.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
+    rows = cursor.fetchall()
+
+    if len(rows) == 0:
+        conn.close()
+        return {"message": "해당하는 글이 없습니다."}
+        
+    # DB와의 연결 끊기
+    conn.close()
+
+    # DB에서 가져온 데이터를 딕셔너리 리스트로 변환
+    return [dict(row) for row in rows]
+
+# 수정 클래스: 게시글 수정할 때는 닉네임 필요 없어서 새로 만들기
+class PostUpdate(BaseModel):
+    title: str
+    content: str
+    password: int
+
+# 게시글 수정 API
+@app.put("/posts/{post_id}")
+def correct_post(post_id: int, updated_post: PostUpdate):
+    conn = sqlite3.connect("web_project.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
+    rows = cursor.fetchall()
+
+    if len(rows) == 0:
+        conn.close()
+        # 아이디가 존재하지 않을때 출력되는 메시지
+        return {"message": "해당하는 글이 없습니다."}
+    else:
+        cursor.execute("SELECT * FROM posts WHERE password = ?", (updated_post.password,))
+        rows = cursor.fetchall()
+
+        if len(rows) == 0:
+            conn.close()
+            # 비밀번호가 틀렸을때 출력되는 메시지
+            return {"message": "비밀번호가 틀렸습니다."}
+        else:
+            summary = generate_summary(updated_post.content)
+            cursor.execute("UPDATE posts SET title = ?, content = ?, summary = ? WHERE id = ?", (updated_post.title, updated_post.content, summary, post_id))
+            
+            conn.commit()
+            conn.close()
+
+    # 수정 성공 메시지 출력
+    return {"message": "글이 성공적으로 수정되었습니다."}
+
+# delete API
+@app.delete("/posts/{post_id}")
+def delete_post(post_id: int, password: int):
+    conn = sqlite3.connect("web_project.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
+    rows = cursor.fetchall()
+
+    if len(rows) == 0:
+        conn.close()
+        return {"message": "해당하는 글이 없습니다."}
+    else:
+        cursor.execute("SELECT * FROM posts WHERE password = ?", (password,))
+        rows = cursor.fetchall()
+
+        if len(rows) == 0:
+            conn.close()
+            return {"message": "비밀번호가 틀렸습니다."}
+        else:
+            cursor.execute("DELETE FROM posts WHERE id = ?", (post_id,))
+            conn.commit()
+            conn.close()
+
+    return {"message": "글이 성공적으로 삭제되었습니다."}
