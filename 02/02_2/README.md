@@ -13,9 +13,15 @@
   ┗ 📄 web_project.db
 
 ## 설치 및 실행 방법
-'''bash
+'''
+cd 02_2
+'''
+'''
 uv sync
+'''
+'''
 uv run uvicorn main:app --reload
+'''
 
 ## API 명세
 
