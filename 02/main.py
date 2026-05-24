@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from fastapi import FastAPI
+from fastapi import HTTPException
 import ollama
 import sqlite3
 
@@ -22,7 +23,7 @@ def generate_summary(content: str):
 
 # 글 작성 API
 # HTTP 메서드의 POST의 endpoint /posts
-@app.post("/posts")
+@app.post("/posts", status_code=201)
 # post에 PostCreate 클래스를 저장
 def create_post(post: PostCreate):
     # Ollama로 요약본 만들기
@@ -46,7 +47,7 @@ def create_post(post: PostCreate):
     # model_dump()는 데이터를 딕셔너리로 변환해서 모두 보여줌
     return {"message": "글이 성공적으로 전송되었습니다", "data": post.model_dump()}
 
-@app.get("/posts")
+@app.get("/posts", status_code=200)
 # str = None: nickname을 입력하지 않아도 됨
 def read_post_by_nickname(nickname: str = None):
     # DB 연결
@@ -68,7 +69,7 @@ def read_post_by_nickname(nickname: str = None):
         # 검색했는데 해당 닉네임으로 쓰인 글이 없을때
         if len(rows) == 0:
             conn.close()
-            return {"message": "해당하는 닉네임의 글이 없습니다."}
+            raise HTTPException(status_code=404, detail="해당하는 닉네임의 글이 없습니다.")
     
     # DB와의 연결 끊기
     conn.close()
@@ -76,7 +77,7 @@ def read_post_by_nickname(nickname: str = None):
     # DB에서 가져온 데이터를 딕셔너리 리스트로 변환
     return [dict(row) for row in rows]
 
-@app.get("/posts/{post_id}")
+@app.get("/posts/{post_id}", status_code=200)
 def read_post_by_id(post_id: int):
     conn = sqlite3.connect("web_project.db")
     conn.row_factory = sqlite3.Row
@@ -88,7 +89,7 @@ def read_post_by_id(post_id: int):
 
     if len(rows) == 0:
         conn.close()
-        return {"message": "해당하는 글이 없습니다."}
+        raise HTTPException(status_code=404, detail="해당하는 글이 없습니다.")
         
     # DB와의 연결 끊기
     conn.close()
@@ -103,7 +104,7 @@ class PostUpdate(BaseModel):
     password: int
 
 # 게시글 수정 API
-@app.put("/posts/{post_id}")
+@app.put("/posts/{post_id}", status_code=201)
 def correct_post(post_id: int, updated_post: PostUpdate):
     conn = sqlite3.connect("web_project.db")
     conn.row_factory = sqlite3.Row
@@ -115,7 +116,7 @@ def correct_post(post_id: int, updated_post: PostUpdate):
     if len(rows) == 0:
         conn.close()
         # 아이디가 존재하지 않을때 출력되는 메시지
-        return {"message": "해당하는 글이 없습니다."}
+        raise HTTPException(status_code=404, detail="해당하는 글이 없습니다.")
     else:
         cursor.execute("SELECT * FROM posts WHERE password = ?", (updated_post.password,))
         rows = cursor.fetchall()
@@ -123,7 +124,7 @@ def correct_post(post_id: int, updated_post: PostUpdate):
         if len(rows) == 0:
             conn.close()
             # 비밀번호가 틀렸을때 출력되는 메시지
-            return {"message": "비밀번호가 틀렸습니다."}
+            raise HTTPException(status_code=401, detail="비밀번호가 틀렸습니다.")
         else:
             summary = generate_summary(updated_post.content)
             cursor.execute("UPDATE posts SET title = ?, content = ?, summary = ? WHERE id = ?", (updated_post.title, updated_post.content, summary, post_id))
@@ -135,7 +136,7 @@ def correct_post(post_id: int, updated_post: PostUpdate):
     return {"message": "글이 성공적으로 수정되었습니다."}
 
 # delete API
-@app.delete("/posts/{post_id}")
+@app.delete("/posts/{post_id}", status_code=200)
 def delete_post(post_id: int, password: int):
     conn = sqlite3.connect("web_project.db")
     conn.row_factory = sqlite3.Row
@@ -146,14 +147,14 @@ def delete_post(post_id: int, password: int):
 
     if len(rows) == 0:
         conn.close()
-        return {"message": "해당하는 글이 없습니다."}
+        raise HTTPException(status_code=404, detail="해당하는 글이 없습니다.")
     else:
         cursor.execute("SELECT * FROM posts WHERE password = ?", (password,))
         rows = cursor.fetchall()
 
         if len(rows) == 0:
             conn.close()
-            return {"message": "비밀번호가 틀렸습니다."}
+            raise HTTPException(status_code=401, detail="비밀번호가 틀렸습니다.")
         else:
             cursor.execute("DELETE FROM posts WHERE id = ?", (post_id,))
             conn.commit()
