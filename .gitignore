@@ -1,2 +1,8 @@
 .venv/
 .DS_Store
+
+# movie_rag_chatbot
+movie_rag_chatbot/.env
+movie_rag_chatbot/chroma/
+movie_rag_chatbot/data/
+__pycache__/
