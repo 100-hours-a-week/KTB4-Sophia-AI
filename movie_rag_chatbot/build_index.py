@@ -2,7 +2,7 @@ import os
 import json
 import chromadb
 from chromadb.utils import embedding_functions
-from config import DATA_DIR, CHROMA_DIR, GOOGLE_API_KEY
+from config import DATA_DIR, CHROMA_DIR, GEMINI_API_KEY
 
 # 텍스트 자르는 함수
 def chunk_text(text, size=500, overlap=100):
@@ -65,9 +65,9 @@ def clean_meta(m):
 
 metadatas = [clean_meta(m) for m in metadatas]
 
-ef = embedding_functions.GoogleGenerativeAiEmbeddingFunction(
-    api_key=GOOGLE_API_KEY,
-    model_name="models/text-embedding-004")
+os.environ["GEMINI_API_KEY"] = GEMINI_API_KEY
+ef = embedding_functions.GoogleGenaiEmbeddingFunction(
+    model_name="gemini-embedding-001")
 client = chromadb.PersistentClient(path=CHROMA_DIR)
 
 # 전에 만들어둔 collection이 있다면 삭제하고 다시 만들기 (오류 방지)

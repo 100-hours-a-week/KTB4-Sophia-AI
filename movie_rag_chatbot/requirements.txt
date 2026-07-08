@@ -1,5 +1,4 @@
 chromadb
-sentence-transformers
-anthropic
+google-genai
 requests
 python-dotenv

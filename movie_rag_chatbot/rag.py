@@ -1,21 +1,22 @@
+import os
 import chromadb
 from chromadb.utils import embedding_functions
-import google.generativeai as genai
-from config import CHROMA_DIR, GOOGLE_API_KEY
+from google import genai
+from config import CHROMA_DIR, GEMINI_API_KEY
 
 # rag.py
 # 저장된 ChromaDB를 불러와 검색 + 답변 생성을 담당함
 # app.py가 answer 함수를 import해서 사용할 예정
 
-# ChromaDB 불러오기 + 클로드 클라이언트 준비
+# ChromaDB 불러오기 + 제미나이 클라이언트 준비
 # all_titles_kor: 제목 인식 검색용 영화 제목 목록
 # search(): 질문으로 관련 영화 조각 검색 (제목 인식 + 스포일러 필터)
-# build_context(): 검색 결과를 클로드용 참고 자료 텍스트로 정리
-# answer(): 참고 자료를 근거로 클로드가 답변 생성
+# build_context(): 검색 결과를 제미나이용 참고 자료 텍스트로 정리
+# answer(): 참고 자료를 근거로 제미나이가 답변 생성
 
-ef = embedding_functions.GoogleGenerativeAiEmbeddingFunction(
-    api_key=GOOGLE_API_KEY,
-    model_name="models/text-embedding-004")
+os.environ["GEMINI_API_KEY"] = GEMINI_API_KEY
+ef = embedding_functions.GoogleGenaiEmbeddingFunction(
+    model_name="gemini-embedding-001")
 client = chromadb.PersistentClient(path=CHROMA_DIR)
 
 collection = client.get_collection("movies", embedding_function=ef)
@@ -39,8 +40,7 @@ def search(query, n_results=5, spoiler_free=True):
     return results
 
 # 제미나이 클라이언트 불러오기
-genai.configure(api_key=GOOGLE_API_KEY)
-gemini_client = genai.GenerativeModel("gemini-1.5-flash")
+gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 def build_context(query, n_results=5, spoiler_free=True):
     result = search(query, n_results=n_results, spoiler_free=spoiler_free)
@@ -70,5 +70,8 @@ def answer(query, spoiler_free=True):
     # 참고 자료를 시스템 프롬프트에 끼워 넣기
     system = SYSTEM_PROMPT + "\n\n=== 참고 자료 ===\n" + (context or "관련 자료 없음")
     # G: 제미나이가 참고 자료를 근거로 답 생성
-    response = gemini_client.generate_content(system + "\n\n" + query)
+    response = gemini_client.models.generate_content(
+        model="gemini-flash-latest",
+        contents=system + "\n\n" + query,
+    )
     return response.text
