@@ -17,19 +17,29 @@
 그래서 기본적으로 스포일러 없이 알려주고, 결말과 줄거리를 명시적으로 요청하면 상세 내용까지 제공하도록 했다.
 
 ## 프로젝트 구성
+
+**공통**
 - `config.py`: 경로, API 키 설정
 - `collect_data.py`: TMDB, 위키백과에서 영화 데이터 수집 -> movies.jsonl
 - `build_index.py`: 데이터를 청킹 및 임베딩해 ChromaDB에 저장
+
+**바닐라 RAG**
 - `rag.py`: 검색(제목 인식 + 스포일러 필터), 답변 생성
 - `app.py`: 챗봇 실행
+
+**LangChain 적용**
+- `rag_langchain.py`: LangChain 기반 검색, 답변
+- `app_langchain.py`: 챗봇 실행
 
 ## 실행 방법
 1. 가상환경: `python3 -m venv .venv && source .venv/bin/activate`
 2. 설치: `pip install -r requirements.txt`
-3. API 설정: `.env` 생성 후 TMDB_TOKEN, ANTHROPIC_API_KEY 입력
+3. API 설정: `.env` 생성 후 TMDB_TOKEN, GEMINI_API_KEY 입력
 4. 데이터 수집: `python collect_data.py` (movies.jsonl이 이미 있다면 생략)
 5. 인덱스 생성: `python build_index.py`
-6. 챗봇 실행: `python app.py`
+6. 챗봇 실행:
+    - 바닐라 RAG: `python app.py`
+    - LangChain: `python app_langchain.py`
 
 ## 트러블슈팅
 ### 1. [데이터] 위키백과 줄거리 수집량 부족
