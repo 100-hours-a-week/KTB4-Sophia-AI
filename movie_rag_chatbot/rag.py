@@ -1,7 +1,7 @@
 import chromadb
 from chromadb.utils import embedding_functions
-import anthropic
-from config import CHROMA_DIR, ANTHROPIC_API_KEY
+import google.generativeai as genai
+from config import CHROMA_DIR, GOOGLE_API_KEY
 
 # rag.py
 # 저장된 ChromaDB를 불러와 검색 + 답변 생성을 담당함
@@ -13,7 +13,9 @@ from config import CHROMA_DIR, ANTHROPIC_API_KEY
 # build_context(): 검색 결과를 클로드용 참고 자료 텍스트로 정리
 # answer(): 참고 자료를 근거로 클로드가 답변 생성
 
-ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="paraphrase-multilingual-MiniLM-L12-v2")
+ef = embedding_functions.GoogleGenerativeAiEmbeddingFunction(
+    api_key=GOOGLE_API_KEY,
+    model_name="models/text-embedding-004")
 client = chromadb.PersistentClient(path=CHROMA_DIR)
 
 collection = client.get_collection("movies", embedding_function=ef)
@@ -36,8 +38,9 @@ def search(query, n_results=5, spoiler_free=True):
     )
     return results
 
-# 클로드 클라이언트 불러오기
-anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+# 제미나이 클라이언트 불러오기
+genai.configure(api_key=GOOGLE_API_KEY)
+gemini_client = genai.GenerativeModel("gemini-1.5-flash")
 
 def build_context(query, n_results=5, spoiler_free=True):
     result = search(query, n_results=n_results, spoiler_free=spoiler_free)
@@ -66,11 +69,6 @@ def answer(query, spoiler_free=True):
     context = build_context(query, spoiler_free=spoiler_free)
     # 참고 자료를 시스템 프롬프트에 끼워 넣기
     system = SYSTEM_PROMPT + "\n\n=== 참고 자료 ===\n" + (context or "관련 자료 없음")
-    # G: 클로드가 참고 자료를 근거로 답 생성
-    message = anthropic_client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=2000,
-        system=system,
-        messages=[{"role": "user", "content": query}],
-    )
-    return message.content[0].text
+    # G: 제미나이가 참고 자료를 근거로 답 생성
+    response = gemini_client.generate_content(system + "\n\n" + query)
+    return response.text
