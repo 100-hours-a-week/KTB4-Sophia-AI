@@ -16,6 +16,13 @@
 다만, 줄거리를 미리 알고 보는 것을 좋아하는 사람도 있지만 스포일러를 싫어하는 사람도 있기 때문에 스포일러 수위를 사용자가 조절할 수 있도록 했다.
 그래서 기본적으로 스포일러 없이 알려주고, 결말과 줄거리를 명시적으로 요청하면 상세 내용까지 제공하도록 했다.
 
+## 기술 스택
+- **LLM / 임베딩**: Google Gemini (`gemini-flash-latest`, `gemini-embedding-001`)
+- **벡터 DB**: ChromaDB
+- **프레임워크**: LangChain (LCEL)
+- **추적 및 모니터링**: LangSmith
+- **데이터 출처**: TMDB API, 위키백과 API
+
 ## 프로젝트 구성
 
 **공통**
@@ -40,6 +47,13 @@
 6. 챗봇 실행:
     - 바닐라 RAG: `python app.py`
     - LangChain: `python app_langchain.py`
+#### LangSmith 추적
+`.env`에 아래 항목을 추가하여 LangSmith 대시보드에서 체인 실행 과정을 추적
+```
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY
+LANGSMITH_PROJECT=movie-rag-chatbot
+```
 
 ## 트러블슈팅
 ### 1. [데이터] 위키백과 줄거리 수집량 부족
@@ -116,3 +130,8 @@
 **다음에 적용할 것**
 - 바닐라에 있던 제목 인식 검색과 스포일러 필터를 LangChain 버전에도 적용하기
 - 하이브리드 검색, LangSmith를 통한 체인 추적 및 평가
+
+### LangSmith 활용
+- LangSmith로 체인 실행을 추적하며 검색(retriever)이 실제로 어떤 영화 조각을 가져오고, 그것이 프롬프트에 어떻게 반영되는지 단계별로 확인할 수 있었다.
+- 제목 필터가 없어도 특정 영화를 잘 찾는 현상을 추적 로그로 직접 검증할 수 있었다.
+- 코드 내부를 눈으로 보니 동작의 원인을 이해하기 쉬웠다.
