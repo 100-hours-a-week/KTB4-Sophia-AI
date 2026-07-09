@@ -2,3 +2,6 @@ chromadb
 google-genai
 requests
 python-dotenv
+langchain
+langchain-google-genai
+langchain-chroma
