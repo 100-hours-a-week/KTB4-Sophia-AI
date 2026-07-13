@@ -128,8 +128,10 @@ LANGSMITH_PROJECT=movie-rag-chatbot
 - 이를 통해 검색으로 제어, 프롬프트로 제어라는 설계 선택지가 있다는 것을 알게 되었다.
 
 **다음에 적용할 것**
-- 바닐라에 있던 제목 인식 검색과 스포일러 필터를 LangChain 버전에도 적용하기
+- LangGraph로 마이그레이션 후 AI Agent로 확장
+- LangSmith Dataset 기반 정량 평가 - 최종 버전에 적용 예정
 - 하이브리드 검색, LangSmith를 통한 체인 추적 및 평가
+- 스포일러를 프롬프트 규칙이 아닌 메타데이터 필터로 더 엄격하게 제어
 
 ### LangSmith 활용
 - LangSmith로 체인 실행을 추적하며 검색(retriever)이 실제로 어떤 영화 조각을 가져오고, 그것이 프롬프트에 어떻게 반영되는지 단계별로 확인할 수 있었다.
