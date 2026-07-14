@@ -1,0 +1,114 @@
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from typing_extensions import TypedDict
+from langgraph.graph import StateGraph, START, END
+from config import CHROMA_DIR, GEMINI_API_KEY
+from langchain_chroma import Chroma
+
+# 그래프 전체에서 공유되는 상태 구조 정의
+class State(TypedDict):
+    # question: 처리할 문장을 담는다
+    question: str
+    # needs_summary: 문장을 요약해야하는지 여부
+    spoiler_free: bool
+    # context: 검색된 참고 자료
+    context: str
+    # 최종 답변
+    answer: str
+
+embeddings = GoogleGenerativeAIEmbeddings(
+    model="models/gemini-embedding-001",
+    google_api_key=GEMINI_API_KEY,
+)
+
+model = ChatGoogleGenerativeAI(
+    model="gemini-flash-latest",
+    google_api_key=GEMINI_API_KEY,
+)
+
+# 벡터스토어 불러오기
+# 저장된 movies 컬렉션 불러오기
+vectorstore = Chroma(
+    collection_name="movies",
+    embedding_function=embeddings,
+    persist_directory=CHROMA_DIR,
+)
+
+# 검색된 문서들을 참고 자료 텍스트로 정리
+def format_docs(docs):
+    return "\n\n".join(
+        f'[{d.metadata["title_kor"]} ({d.metadata["year"]}) | 평점 {d.metadata["rating"]} | {d.metadata["genres"]}]\n'
+        f'{d.page_content}\n출처: {d.metadata["source_url"]}'
+        for d in docs
+    )
+
+# 노드 함수 정의
+# 분류 노드: 텍스트 길이로 요약 필요 여부 판단
+def classify(state: State) -> dict:
+    question = state["question"]
+    SYSTEM_PROMPT = """다음 질문이 영화의 결말이나 상세 줄거리에서 스포일러를 원하는지 판단해.
+            원하면 yes, 아니면 no로만 답해."""
+    prompt = SYSTEM_PROMPT + "\n\n질문: " + question
+    result = model.invoke(prompt)
+    answer = str(result.content)
+    wants_spoiler = "yes" in answer.lower()
+    return {"spoiler_free": not wants_spoiler}
+
+# 스포일러 처리 노드: 줄거리를 스포일러 포함해서 반환
+def spoiler(state: State) -> dict:
+    question = state["question"]
+    docs = vectorstore.similarity_search(question, k=5, filter=None)
+    context = format_docs(docs)
+    return {"context": context}
+
+# 스포일러 없이 처리 노드: 줄거리를 스포일러 없이 반환
+def no_spoiler(state: State) -> dict:
+    question = state["question"]
+    docs = vectorstore.similarity_search(question, k=5, filter={"spoiler": False})
+    context = format_docs(docs)
+    return {"context": context}
+
+# 조건부 라우팅 함수: 다음 노드 결정
+def route(state: State) -> str:
+    return "no_spoiler" if state["spoiler_free"] else "spoiler"
+
+# 답변 생성 함수
+def generate(state: State) -> dict:
+    question = state["question"]
+    context = state["context"]
+    SYSTEM_PROMPT = """너는 영화를 추천하고 관련 질문에 답하는 챗봇이야.
+                    아래 '참고 자료'는 실제 데이터베이스에서 검색된 진짜 영화 정보야. 신뢰하고 활용해.
+                    추천은 참고 자료에 있는 작품 중에서만 골라. 자료에 없는 작품을 지어내지 마.
+                    자료에 상세 줄거리가 없으면 있는 정보로 최대한 답하고, 사용자가 명시적으로 결말/스포일러를 요청한 경우에만 포함해서 알려줘.
+                    답변은 한국어로 하고, 이모지는 과하지 않게 사용해."""
+    prompt = SYSTEM_PROMPT + "\n\n=== 참고 자료 ===\n" + context + "\n\n질문: " + question
+    result = model.invoke(prompt)
+    content = result.content
+    if isinstance(content, list):
+        content = "".join(
+            part.get("text", "") if isinstance(part, dict) else str(part)
+            for part in content
+        )
+    return {"answer": content}
+
+# 그래프 빌더 생성
+graph = StateGraph(State)
+
+# 노드 등록
+graph.add_node("classify", classify)
+graph.add_node("spoiler", spoiler)
+graph.add_node("no_spoiler", no_spoiler)
+graph.add_node("generate", generate)
+
+# 엣지 연결
+graph.add_edge(START, "classify")
+graph.add_conditional_edges("classify", route, ["spoiler", "no_spoiler"])
+graph.add_edge("spoiler", "generate")
+graph.add_edge("no_spoiler", "generate")
+graph.add_edge("generate", END)
+
+# 컴파일
+app = graph.compile()
+
+def answer(question):
+    result = app.invoke({"question": question})
+    return result["answer"]
