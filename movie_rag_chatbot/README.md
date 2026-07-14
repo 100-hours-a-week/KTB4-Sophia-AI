@@ -19,7 +19,7 @@
 ## 기술 스택
 - **LLM / 임베딩**: Google Gemini (`gemini-flash-latest`, `gemini-embedding-001`)
 - **벡터 DB**: ChromaDB
-- **프레임워크**: LangChain (LCEL)
+- **프레임워크**: LangChain (LCEL), LangGraph (StateGraph)
 - **추적 및 모니터링**: LangSmith
 - **데이터 출처**: TMDB API, 위키백과 API
 
