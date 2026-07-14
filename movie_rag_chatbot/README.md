@@ -38,6 +38,10 @@
 - `rag_langchain.py`: LangChain 기반 검색, 답변
 - `app_langchain.py`: LangChain 버전 챗봇 실행
 
+**LangGraph 적용**
+- `rag_langgraph.py`: LangGraph 기반 검색, 답변
+- `app_langgraph.py`: LangGraph 버전 챗봇 실행
+
 ## 실행 방법
 1. 가상환경: `python3 -m venv .venv && source .venv/bin/activate`
 2. 설치: `pip install -r requirements.txt`
@@ -47,6 +51,7 @@
 6. 챗봇 실행:
     - 바닐라 RAG: `python app.py`
     - LangChain: `python app_langchain.py`
+    - LangGraph: `python app_langgraph.py`
 #### LangSmith 추적
 `.env`에 아래 항목을 추가하여 LangSmith 대시보드에서 체인 실행 과정을 추적
 ```
