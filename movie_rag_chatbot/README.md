@@ -16,6 +16,15 @@
 다만, 줄거리를 미리 알고 보는 것을 좋아하는 사람도 있지만 스포일러를 싫어하는 사람도 있기 때문에 스포일러 수위를 사용자가 조절할 수 있도록 했다.
 그래서 기본적으로 스포일러 없이 알려주고, 결말과 줄거리를 명시적으로 요청하면 상세 내용까지 제공하도록 했다.
 
+## 진행 현황
+- [✅] 1. 바닐라 RAG - 직접 구현 (검색 및 답변)
+- [✅] 2. LangChain 마이그레이션 (LCEL 체인)
+- [✅] 3. LangSmith 추적 연동
+- [  ] 4. LangGrpah 확장 - 진행 중
+    - [✅] 스포일러 유무 분기 그래프 구현
+    - [  ] 의도 분류 (추천/특정 작품/잡담 등) 분기 추가 (예정)
+- [  ] 5. LangSmith Dataset 기반 평가 (예정)
+
 ## 기술 스택
 - **LLM / 임베딩**: Google Gemini (`gemini-flash-latest`, `gemini-embedding-001`)
 - **벡터 DB**: ChromaDB
@@ -25,20 +34,20 @@
 
 ## 프로젝트 구성
 
-**공통**
+**공통** ✅ 완료
 - `config.py`: 경로, API 키 설정
 - `collect_data.py`: TMDB, 위키백과에서 영화 데이터 수집 -> movies.jsonl
 - `build_index.py`: 데이터를 청킹 및 임베딩해 ChromaDB에 저장
 
-**바닐라 RAG**
+**바닐라 RAG** ✅ 완료
 - `rag.py`: 검색(제목 인식 + 스포일러 필터), 답변 생성
 - `app.py`: 챗봇 실행
 
-**LangChain 적용**
+**LangChain 적용** ✅ 완료
 - `rag_langchain.py`: LangChain 기반 검색, 답변
 - `app_langchain.py`: LangChain 버전 챗봇 실행
 
-**LangGraph 적용**
+**LangGraph 적용** 🔄 진행중
 - `rag_langgraph.py`: LangGraph 기반 검색, 답변
 - `app_langgraph.py`: LangGraph 버전 챗봇 실행
 
@@ -102,7 +111,7 @@ LANGSMITH_PROJECT=movie-rag-chatbot
 
 ## 회고
 
-### 바닐라 RAG 구현
+### [바닐라 RAG 구현]
 
 **배운 점**
 - RAG가 검색(R) -> 증강(A) -> 생성(G) 구조라는 것을 직접 구현하며 이해했다.
@@ -127,7 +136,7 @@ LANGSMITH_PROJECT=movie-rag-chatbot
 **다음에 적용할 것**
 - 검색 로직을 LangChain 리트리버로 마이그레이션하면서 하이브리드 검색도 함께 적용해볼 계획이다.
 
-### LangChain 마이그레이션
+### [LangChain 마이그레이션]
 
 **배운 점**
 - 바닐라에서 함수로 직접 짰던 검색 -> 프롬프트 조합 -> 모델 호출 -> 텍스트 추출을 LangChain에서는 리트리버, 프롬프트, 모델, 파서라는 정해진 부품을 `|`로 이어붙인 체인으로 표현한다는 것을 이해했다.
@@ -153,12 +162,12 @@ LANGSMITH_PROJECT=movie-rag-chatbot
 - 하이브리드 검색, LangSmith를 통한 체인 추적 및 평가
 - 스포일러를 프롬프트 규칙이 아닌 메타데이터 필터로 더 엄격하게 제어
 
-### LangSmith 활용
+### [LangSmith 활용]
 - LangSmith로 체인 실행을 추적하며 검색(retriever)이 실제로 어떤 영화 조각을 가져오고, 그것이 프롬프트에 어떻게 반영되는지 단계별로 확인할 수 있었다.
 - 제목 필터가 없어도 특정 영화를 잘 찾는 현상을 추적 로그로 직접 검증할 수 있었다.
 - 코드 내부를 눈으로 보니 동작의 원인을 이해하기 쉬웠다.
 
-### LangGraph 마이그레이션
+### [LangGraph 마이그레이션]
 
 **배운 점**
 - LangGraph는 State를 노드들이 주고받으며 처리하고, 조건부 엣지로 분기하는 구조라는 것을 이해했다. LangChain이 직선 파이프라면, LangGraph는 판단해서 길이 갈리는 그래프라는 차이를 알았다.
