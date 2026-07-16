@@ -120,6 +120,7 @@ def get_plot(title_en):
         "explaintext": True,
         "redirects": 1,
     }
+    # 프로젝트 이름/버전/설명 없으면 막힘..!
     headers = {"User-Agent": "movie-rag-project/1.0 (student project)"}
     try:
         for attempt in range(3):
@@ -128,9 +129,17 @@ def get_plot(title_en):
                 time.sleep(5)
                 continue
             break
+        # r을 딕셔너리로 바꿔서 담기
         data = r.json()
+        # query에 들어있는 pages 항목
         pages = data["query"]["pages"]
+        # pages 생김새
+        # pages = {"27205": {"title": "Inception", "extract": "본문..."}}
+        # .values: 숫자 말고 값들만 뽑아
+        # iter(~): 하나씩 꺼낼 준비
+        # next(~): 첫번째 문서 하나 꺼내줌
         page = next(iter(pages.values()))
+        # 꺼낸 문서에서 extract(본문 전체 텍스트) 꺼내서 text에 담기
         text = page.get("extract", "")
         if not text:
             return ""

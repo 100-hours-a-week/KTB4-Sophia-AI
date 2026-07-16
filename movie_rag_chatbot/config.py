@@ -10,7 +10,6 @@ CHROMA_DIR = os.path.join(BASE_DIR, "chroma")
 # .env 파일 읽어서 토큰 가져오기
 load_dotenv()   # .env 파일 읽기
 TMDB_TOKEN = os.getenv("TMDB_TOKEN")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # 폴더 만들기 (이미 있기는 함)
