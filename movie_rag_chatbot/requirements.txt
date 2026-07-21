@@ -6,3 +6,7 @@ langchain
 langchain-google-genai
 langchain-chroma
 langgraph
+fastapi
+uvicorn
+streamlit
+markdown
