@@ -32,6 +32,8 @@
 - **프레임워크**: LangChain (LCEL), LangGraph (StateGraph)
 - **추적 및 모니터링**: LangSmith
 - **데이터 출처**: TMDB API, 위키백과 API
+- **백엔드**: FastAPI (REST API), Uvicorn
+- **프론트엔드**: HTML / CSS / JavaScript
 
 ## 📁 프로젝트 구성
 
@@ -52,6 +54,9 @@
 - `rag_langgraph.py`: LangGraph 기반 검색, 답변
 - `app_langgraph.py`: LangGraph 버전 챗봇 실행
 
+- `api.py` - FastAPI 서버. `/chat` 엔드포인트로 질문을 받아 answer 함수 호출
+- `index.html` - 웹 프론트엔드 (넷플릭스 스타일 채팅 UI, ASKFLIX)
+
 ## ▶️ 실행 방법
 1. 가상환경: `python3 -m venv .venv && source .venv/bin/activate`
 2. 설치: `pip install -r requirements.txt`
@@ -69,6 +74,14 @@ LANGSMITH_TRACING=true
 LANGSMITH_API_KEY
 LANGSMITH_PROJECT=movie-rag-chatbot
 ```
+#### 웹 실행 (FastAPI + 프론트엔드)
+1. FastAPI 서버 실행
+```bash
+    cd movie_rag_chatbot
+    uvicorn api:app --reload
+```
+2. 브라우저에서 `index.html` 파일 열기 (`open index.html`)
+3. 채팅창에 질문 입력 또는 예시 버튼 클릭
 
 ## 🐛 트러블슈팅
 ### 1. [데이터] 위키백과 줄거리 수집량 부족
@@ -109,6 +122,10 @@ LANGSMITH_PROJECT=movie-rag-chatbot
 - **문제**: 테스트 중 `429 RESURCE_EXHAUSTED` 에러 발생
 - **원인**: 제미나이 무료 티어의 요청 한도를 초과했다. 특히 챗봇이 질문 1건당 요청을 2번 (스포일러 판단 + 답변 생성) 보내서 한도 소진이 빨랐다.
 - **해결** 무료 한도가 더 넉넉한 모델로 잠시 교체해서 이용하고, 한도 초과 시 잠시 대기 후 재시도했다. 향후 분류 노드를 키워드 방식으로 바꿔 요청 수를 줄이는 방법도 있다.
+
+### 9. [배포] CORS 에러
+- **문제**: HTML에서 FastAPI 호출 시 요청이 차단되었다.
+- **해결**: `CORSMiddleware`를 추가해서 cross-origin 요청을 허용했다.
 
 ## 📝 회고
 
@@ -182,3 +199,6 @@ LANGSMITH_PROJECT=movie-rag-chatbot
 - 의도 분류(추천, 특정 작품, 잡담) 등의 분기도 추가해서 에이전트를 더 확장
 - 분류 노드를 키워드 방식으로 바꿔 API 요청 수 줄여 한도 관리
 - LangSmith Dataset 기반 정량 평가
+
+### [FastAPI & 프론트엔드]
+- RAG 로직을 `answer` 함수로 분리해둔 덕에, FastAPI는 이 함수를 호출하는 정도로만 만들면 됐다. 'CLI -> 웹 서버' 전환이 파일에 몇 줄 추가하는 것으로 실행되는 것을 보며 역할별 파일 분리의 이점을 체감했다. 프론트는 Streamlit으로 시작했지만 레이아웃을 원하는대로 수정하기 위해 바닐라 HTML/JS로 전환해서 바이브코딩했다.
