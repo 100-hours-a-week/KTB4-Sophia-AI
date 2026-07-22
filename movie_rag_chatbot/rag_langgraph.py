@@ -1,8 +1,29 @@
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
-from config import CHROMA_DIR, GEMINI_API_KEY
+from config import CHROMA_DIR, GEMINI_API_KEY, DATA_DIR
 from langchain_chroma import Chroma
+import json, os
+
+all_movies = []
+with open(os.path.join(DATA_DIR, "movies.jsonl"), encoding="utf-8") as f:
+    for line in f:
+        all_movies.append(json.loads(line))
+
+GENRES = ["액션", "모험", "애니메이션", "코미디", "범죄", "드라마",
+          "가족", "판타지", "공포", "미스터리", "로맨스", "SF", "스릴러", "전쟁", "서부"]
+
+def detect_genre(question):
+    for g in GENRES:
+        if g in question:
+            return g
+    return None
+
+def genre_search(genre):
+    matched = [m for m in all_movies if genre in m["genres"]]
+    matched = sorted(matched, key=lambda m: m["rating"], reverse=True)
+    return matched[:5]
+
 
 # 그래프 전체에서 공유되는 상태 구조 정의
 class State(TypedDict):
@@ -67,8 +88,27 @@ def no_spoiler(state: State) -> dict:
     context = format_docs(docs)
     return {"context": context}
 
+# 장르 검색 노드: 장르로 필터 후 평점순 상위 5개
+def genre(state: State) -> dict:
+    question = state["question"]
+    # 어떤 장르인지 찾기
+    g = detect_genre(question)
+    # 그 장르 상위 5개
+    movies = genre_search(g)
+    # movies 딕셔너리 리스트를 context 문자열로 바꾸기
+    context = "\n\n".join(
+        f'[{m["title_kor"]} ({m["year"]}) | 평점 {m["rating"]} | {", ".join(m["genres"])}]\n{m["overview"]}\n출처: {m["source_url"]}'
+        for m in movies
+    )
+    return {'context': context}
+
+
 # 조건부 라우팅 함수: 다음 노드 결정
 def route(state: State) -> str:
+    # 먼저 장르 검색인지 판단
+    if detect_genre(state["question"]):
+        return "genre"
+    # 장르 검색이 아니라면 원래대로 스포일러 분기로 가기
     return "no_spoiler" if state["spoiler_free"] else "spoiler"
 
 # 답변 생성 함수
@@ -98,10 +138,12 @@ graph.add_node("classify", classify)
 graph.add_node("spoiler", spoiler)
 graph.add_node("no_spoiler", no_spoiler)
 graph.add_node("generate", generate)
+graph.add_node("genre", genre)
 
 # 엣지 연결
 graph.add_edge(START, "classify")
-graph.add_conditional_edges("classify", route, ["spoiler", "no_spoiler"])
+graph.add_conditional_edges("classify", route, ["genre", "spoiler", "no_spoiler"])
+graph.add_edge("genre", "generate")
 graph.add_edge("spoiler", "generate")
 graph.add_edge("no_spoiler", "generate")
 graph.add_edge("generate", END)
