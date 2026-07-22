@@ -37,6 +37,7 @@ for r in records:
         "year": r["year"],
         "genres": ", ".join(r["genres"]),
         "keywords": ", ".join(r["keywords"]),
+        "director": r["director"],
         "casts": ", ".join(r["casts"]),
         "rating": float(r["rating"]),
         "source_url": r["source_url"],
@@ -55,8 +56,12 @@ for r in records:
         metadatas.append({**base_meta, "spoiler": True, "section": "plot"})
         ids.append(f"{r['id']}_plot_{i}")
 
-print("총 청크: ", len(docs))
+    info = f"{r['title_kor']} ({r['title_en']}) 감독: {r['director']}, 장르: {', '.join(r['genres'])}"
+    docs.append(info)
+    metadatas.append({**base_meta, "spoiler": False, "section": "info"})
+    ids.append(f"{r['id']}_info")
 
+print("총 청크: ", len(docs))
 
 # k: key, v: value
 # m: 딕셔너리 하나, m.items: 딕셔너리 내부의 키,값 한 쌍씩 순회
