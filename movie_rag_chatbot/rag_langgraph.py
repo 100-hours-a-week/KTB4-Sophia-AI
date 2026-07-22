@@ -154,3 +154,26 @@ app = graph.compile()
 def answer(question):
     result = app.invoke({"question": question})
     return result["answer"]
+
+# 동기 스트리밍 테스트
+# def test_graph_stream():
+#    for chunk, metadata in app.stream({"question": "스릴러 영화 추천"}, stream_mode="messages"):
+#        print(metadata.get("langgraph_node"), "|", chunk.content)
+
+def answer_stream(question):
+    for chunk, metadata in app.stream({"question": question}, stream_mode="messages"):
+        # generate 노드에서 온 조각만
+        if metadata.get("langgraph_node") != "generate":
+            continue
+        # content에서 text만 뽑기
+        content = chunk.content
+        if isinstance(content, list):
+            for part in content:
+                if isinstance(part, dict) and part.get("text"):
+                    yield part["text"]
+        elif isinstane(content, str) and content:
+            yield content
+
+def test_answer_stream():
+    for piece in answer_stream("스릴러 영화 추천"):
+        print(piece, end="", flush=True)
