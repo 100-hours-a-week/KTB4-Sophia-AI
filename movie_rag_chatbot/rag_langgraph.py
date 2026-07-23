@@ -171,7 +171,7 @@ def answer_stream(question):
             for part in content:
                 if isinstance(part, dict) and part.get("text"):
                     yield part["text"]
-        elif isinstane(content, str) and content:
+        elif isinstance(content, str) and content:
             yield content
 
 def test_answer_stream():

@@ -20,11 +20,16 @@
 - [✅] 1. 바닐라 RAG - 직접 구현 (검색 및 답변)
 - [✅] 2. LangChain 마이그레이션 (LCEL 체인)
 - [✅] 3. LangSmith 추적 연동
-- [  ] 4. LangGrpah 확장 - 진행 중
+- [🔄] 4. LangGrpah 확장 - 진행 중
     - [✅] 스포일러 유무 분기 그래프 구현
+    - [✅] 장르 검색 분기 추가 (조건 검색 노드)
     - [  ] 의도 분류 (추천/특정 작품/잡담 등) 분기 추가 (예정)
-- [  ] 5. LangSmith Dataset 기반 평가 (예정)
-- [  ] 6. 검색 품질 개선: 하이브리드 검색, 리랭킹 등 (예정)
+- [✅] 5. 데이터 품질 개선 (줄거리 보강 498/500, 감독 정보 추가 500/500)
+- [✅] 6. 웹 서비스화 (FastAPI 백엔드 + HTML 프론트엔드)
+- [🔄] 7. 응답 스트리밍 (rag 계층 완료) - 진행 중
+- [  ] 8. 배포 (Docker -> AWS EC2) (예정)
+- [  ] 9. LangSmith Dataset 기반 평가 (예정)
+- [  ] 10. 검색 품질 개선: 하이브리드 검색, 리랭킹 등 (예정)
 
 ## 🛠️ 기술 스택
 - **LLM / 임베딩**: Google Gemini (`gemini-flash-latest`, `gemini-embedding-001`)
@@ -41,6 +46,9 @@
 - `config.py`: 경로, API 키 설정
 - `collect_data.py`: TMDB, 위키백과에서 영화 데이터 수집 -> movies.jsonl
 - `build_index.py`: 데이터를 청킹 및 임베딩해 ChromaDB에 저장
+- `fill_plots.py`: 빈 줄거리만 골라 위키백과에서 재수집해 보강
+- `add_directors.py`: TMDB 데이터 항목 중 'crew'에서 감독 정보를 수집해 추가
+- `inspect_data.py`: 수집 데이터 점검용 파일 (json -> csv 변환, 장르별 개수 확인)
 
 **바닐라 RAG** ✅ 완료
 - `rag.py`: 검색(제목 인식 + 스포일러 필터), 답변 생성
@@ -54,6 +62,7 @@
 - `rag_langgraph.py`: LangGraph 기반 검색, 답변
 - `app_langgraph.py`: LangGraph 버전 챗봇 실행
 
+**웹 서비스** ✅ 완료 / 🔄 스트리밍 진행중
 - `api.py` - FastAPI 서버. `/chat` 엔드포인트로 질문을 받아 answer 함수 호출
 - `index.html` - 웹 프론트엔드 (넷플릭스 스타일 채팅 UI, ASKFLIX)
 
