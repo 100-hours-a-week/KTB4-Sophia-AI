@@ -1,0 +1,13 @@
+# 실행할 컨테이너들 목록
+services:
+  # 컨테이너 이름 (그냥 붙임..교안 따라서)
+  app-build:
+    # 현재 폴더의 Dockerfile로 상자 만들기
+    build: .
+    ports:
+      # 형식: 바깥:안
+      - "8000:8000"
+    # Dockerfile의 COPY . .로 .env가 상자에 복사되긴 했지만
+    # 이렇게 직접 주입하는게 정석..이러고 함
+    env_file:
+      - .env
