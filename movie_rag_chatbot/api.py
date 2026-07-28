@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from rag_langgraph import answer_stream
+from fastapi.responses import FileResponse
 
 app = FastAPI()
 
@@ -33,3 +34,7 @@ def chat_stream(req: ChatRequest):
         # 글자 조각을 보내준다고 알려줌
         media_type="text/plain",
     )
+
+@app.get("/")
+def home():
+    return FileResponse("index.html")
