@@ -42,7 +42,7 @@ embeddings = GoogleGenerativeAIEmbeddings(
 )
 
 model = ChatGoogleGenerativeAI(
-    model="gemini-flash-latest",
+    model="gemini-2.0-flash",
     google_api_key=GEMINI_API_KEY,
 )
 
