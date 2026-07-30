@@ -5,6 +5,7 @@ python-dotenv
 langchain
 langchain-google-genai
 langchain-chroma
+langchain-anthropic
 langgraph
 fastapi
 uvicorn

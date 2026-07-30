@@ -11,6 +11,7 @@ CHROMA_DIR = os.path.join(BASE_DIR, "chroma")
 load_dotenv()   # .env 파일 읽기
 TMDB_TOKEN = os.getenv("TMDB_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
 # 폴더 만들기 (이미 있기는 함)
 os.makedirs(DATA_DIR, exist_ok=True)

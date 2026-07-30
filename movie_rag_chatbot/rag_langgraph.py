@@ -1,8 +1,9 @@
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
-from config import CHROMA_DIR, GEMINI_API_KEY, DATA_DIR
+from config import CHROMA_DIR, GEMINI_API_KEY, DATA_DIR, ANTHROPIC_API_KEY
 from langchain_chroma import Chroma
+from langchain_anthropic import ChatAnthropic
 import json, os
 
 all_movies = []
@@ -44,6 +45,11 @@ embeddings = GoogleGenerativeAIEmbeddings(
 model = ChatGoogleGenerativeAI(
     model="gemini-flash-latest",
     google_api_key=GEMINI_API_KEY,
+)
+
+claude_model = ChatAnthropic(
+    model = "claude-sonnet-4-5-20250929",
+    api_key=ANTHROPIC_API_KEY,
 )
 
 # 벡터스토어 불러오기
@@ -121,7 +127,7 @@ def generate(state: State) -> dict:
                     자료에 상세 줄거리가 없으면 있는 정보로 최대한 답하고, 사용자가 명시적으로 결말/스포일러를 요청한 경우에만 포함해서 알려줘.
                     답변은 한국어로 하고, 이모지는 과하지 않게 사용해. 출처나 링크는 답변에 삽입하지 마."""
     prompt = SYSTEM_PROMPT + "\n\n=== 참고 자료 ===\n" + context + "\n\n질문: " + question
-    result = model.invoke(prompt)
+    result = claude_model.invoke(prompt)
     content = result.content
     if isinstance(content, list):
         content = "".join(
