@@ -95,6 +95,6 @@ docker compose up --build -d
 ## 📚 개발 기록
 
 프로젝트 진행 과정과 상세 기록은 `history/` 폴더 참고!
-- [진행 상황 및 계획] (./history/ROADMAP.md)
-- [트러블슈팅] (./history/TROUBLESHOOTING.md)
-- [회고] (./history/RETROSPECTIVE.md)
+- [진행 상황 및 계획](./history/ROADMAP.md)
+- [트러블슈팅](./history/TROUBLESHOOTING.md)
+- [회고](./history/RETROSPECTIVE.md)
