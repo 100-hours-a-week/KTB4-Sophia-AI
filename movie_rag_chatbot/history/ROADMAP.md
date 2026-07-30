@@ -11,6 +11,7 @@
 - FastAPI 백엔드 + HTML 프론트엔드 (ASKFLIX) 연결
 - 응답 스트리밍 구현 (LangGraph stream -> FastAPI -> 프론트)
 - Docker 컨테이너화 (Dockerfile + docker-compose, 프론트까지 단일 컨테이너로 통합)
+- AWS EC2 배포 완료 (외부 접속 가능, 포트 80, restart: always)
 
 ## 현재 문제점 및 개선 방향
 
@@ -25,6 +26,10 @@
 
 ### 3. 감독 검색이 임베딩에 의존
 - 감독명 (영어) <-> 질문 (한글) 매칭을 다국어 임베딩에 의존 -> 유명 감독은 잘 되지만 마이너 감독은 약할 수 있음
+
+### 4. Gemini 무료 API 한도
+- 무료 티어는 분당/일일 호출 한도가 있어서 여러 명이 동시에 테스트하면 429 발생
+- 질문 1건당 Gemini를 2번 (classify + generate) 호출해서 한도 소진이 2배 빠른 상황
 
 ### 개선 목표
 - 스포일러 유무를 판단하는 분류 모델을 직접 구현해서 API 호출 없이 판단 -> 정확도 확보 및 API 요청 수 절감
@@ -53,6 +58,7 @@
 - [✅] docker compose로 실행 + 8000 포트 개방 -> 외부 접속 확인
 
 ### 이후 계획
+- [] Gemini 2번 호출 -> 스포일러는 Gemini, 답변은 Claude
 - [] LangSmith Dataset 기반 정량 평가 (데이터셋 구성 -> 지표 정의 -> 측정)
 - [] 스포일러 분류 모델 직접 구현
 - [] 기능 추가: OTT 시청 정보 (TMDB watch providers), 포스터 이미지, 장르 감지 개선
