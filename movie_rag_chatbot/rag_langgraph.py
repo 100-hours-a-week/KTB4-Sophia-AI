@@ -50,6 +50,7 @@ model = ChatGoogleGenerativeAI(
 claude_model = ChatAnthropic(
     model = "claude-sonnet-4-5-20250929",
     api_key=ANTHROPIC_API_KEY,
+    max_retries=5,
 )
 
 # 벡터스토어 불러오기
