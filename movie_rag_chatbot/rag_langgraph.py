@@ -168,18 +168,27 @@ def answer(question):
 #        print(metadata.get("langgraph_node"), "|", chunk.content)
 
 def answer_stream(question):
-    for chunk, metadata in app.stream({"question": question}, stream_mode="messages"):
-        # generate 노드에서 온 조각만
-        if metadata.get("langgraph_node") != "generate":
-            continue
-        # content에서 text만 뽑기
-        content = chunk.content
-        if isinstance(content, list):
-            for part in content:
-                if isinstance(part, dict) and part.get("text"):
-                    yield part["text"]
-        elif isinstance(content, str) and content:
-            yield content
+    try:
+        for chunk, metadata in app.stream({"question": question}, stream_mode="messages"):
+            # generate 노드에서 온 조각만
+            if metadata.get("langgraph_node") != "generate":
+                continue
+            # content에서 text만 뽑기
+            content = chunk.content
+            if isinstance(content, list):
+                for part in content:
+                    if isinstance(part, dict) and part.get("text"):
+                        yield part["text"]
+            elif isinstance(content, str) and content:
+                yield content
+    except Exception as e:
+        msg = str(e)
+        if "overloaded" in msg.lower():
+            yield "⚠️ 지금 AI 서버가 혼잡해요. 잠시 후 다시 시도해주세요."
+        elif "429" in msg or "resource_exhausted" in msg.lower():
+            yield "⚠️ 요청이 많아 잠시 제한됐어요. 잠시 후 다시 시도해주세요."
+        else:
+            yield f"⚠️ 답변 생성 중 오류가 났어요. ({type(e).__name__})"
 
 def test_answer_stream():
     for piece in answer_stream("스릴러 영화 추천"):
