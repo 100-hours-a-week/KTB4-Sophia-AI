@@ -42,15 +42,15 @@
 - [✅] Streamlit으로 간단한 웹 프론트엔드 제작
 - [✅] 프론트 -> FastAPI 연동해서 웹에서 대화 확인 (CLI -> 웹)
 
-### 07/22 (수) - 컨테이너 + 배포
-- [] Dockerfile 작성 -> 로컬에서 컨테이너로 실행
-- [] docker-compose로 FastAPI + Streamlit 함께 실행
-- [] (여유 있다면) AWS EC2 배포 시도
+### 07/28 (화) - 컨테이너 + 배포
+- [✅] Dockerfile 작성 -> 로컬에서 컨테이너로 실행
+- [✅] docker-compose로 FastAPI + Streamlit 함께 실행
+- [✅] (여유 있다면) AWS EC2 배포 시도
 
-### 07/28 이후 - 배포 마무리
-- [] AWS EC2 인스턴스 생성 + 키페어 발급
-- [] EC2 접속(SSH) -> Docker 설치 -> git clone -> .env 생성
-- [] docker compose로 실행 + 8000 포트 개방 -> 외부 접속 확인
+### 07/29 (수) - 배포 마무리
+- [✅] AWS EC2 인스턴스 생성 + 키페어 발급
+- [✅] EC2 접속(SSH) -> Docker 설치 -> git clone -> .env 생성
+- [✅] docker compose로 실행 + 8000 포트 개방 -> 외부 접속 확인
 
 ### 이후 계획
 - [] LangSmith Dataset 기반 정량 평가 (데이터셋 구성 -> 지표 정의 -> 측정)
