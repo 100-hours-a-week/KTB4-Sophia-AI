@@ -71,6 +71,7 @@ python app_langgraph.py
 uvicorn api:app --reload
 # 웹 (Docker)
 docker compose up --build
+```
 
 **LangSmith 추적** - `.env`에 추가
 ```
