@@ -6,3 +6,4 @@ movie_rag_chatbot/.env
 movie_rag_chatbot/chroma/
 movie_rag_chatbot/data/
 __pycache__/
+spoiler_model/
