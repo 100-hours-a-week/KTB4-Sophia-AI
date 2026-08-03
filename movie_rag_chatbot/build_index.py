@@ -1,6 +1,7 @@
 import os
 import json
 import chromadb
+import time
 from chromadb.utils import embedding_functions
 from config import DATA_DIR, CHROMA_DIR, GEMINI_API_KEY
 
@@ -85,11 +86,22 @@ collection = client.create_collection(COLL, embedding_function=ef)
 
 B = 100
 for i in range(0, len(docs), B):
-    collection.add(
-        documents=docs[i:i + B],
-        metadatas=metadatas[i:i + B],
-        ids=ids[i:i + B],
-    )
+    while True:
+        try:
+            collection.add(
+                documents=docs[i:i+B],
+                metadatas=metadatas[i:i+B],
+                ids=ids[i:i+B],
+            )
+            break
+        except Exception as e:
+            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                print(" 한도 초과, 60초 대기...")
+                time.sleep(60)
+            else:
+                raise
+    print(f"진행: {i+B}/{len(docs)}")
+    time.sleep(60)
 
 print("저장 개수: ", collection.count())
 print("메타 확인: ", collection.get(limit=1, include=["metadatas"])["metadatas"])
