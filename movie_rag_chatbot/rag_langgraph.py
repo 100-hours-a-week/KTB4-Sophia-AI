@@ -1,5 +1,6 @@
 from langchain_voyageai import VoyageAIEmbeddings
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
+import torch
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
 from config import CHROMA_DIR, GEMINI_API_KEY, DATA_DIR, ANTHROPIC_API_KEY, VOYAGE_API_KEY
@@ -14,6 +15,17 @@ with open(os.path.join(DATA_DIR, "movies.jsonl"), encoding="utf-8") as f:
 
 GENRES = ["액션", "모험", "애니메이션", "코미디", "범죄", "드라마",
           "가족", "판타지", "공포", "미스터리", "로맨스", "SF", "스릴러", "전쟁", "서부"]
+
+# 스포일러 유무 추론 모델
+spoiler_tokenizer = AutoTokenizer.from_pretrained("spoiler_model")
+spoiler_model = AutoModelForSequenceClassification.from_pretrained("spoiler_model")
+spoiler_model.eval()
+
+def predict_spoiler(text):
+    inputs = spoiler_tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=64)
+    with torch.no_grad():
+        logits = spoiler_model(**inputs).logits
+    return logits.argmax(-1).item()
 
 def detect_genre(question):
     for g in GENRES:
@@ -43,9 +55,9 @@ embeddings = VoyageAIEmbeddings(
     api_key=VOYAGE_API_KEY,
 )
 
-model = ChatGoogleGenerativeAI(
-    model="gemini-flash-latest",
-    google_api_key=GEMINI_API_KEY,
+model = VoyageAIEmbeddings(
+    model="voyage-4-lite",
+    api_key=VOYAGE_API_KEY,
 )
 
 claude_model = ChatAnthropic(
@@ -74,12 +86,7 @@ def format_docs(docs):
 # 분류 노드: 텍스트 길이로 요약 필요 여부 판단
 def classify(state: State) -> dict:
     question = state["question"]
-    SYSTEM_PROMPT = """다음 질문이 영화의 결말이나 상세 줄거리에서 스포일러를 원하는지 판단해.
-            원하면 yes, 아니면 no로만 답해."""
-    prompt = SYSTEM_PROMPT + "\n\n질문: " + question
-    result = model.invoke(prompt)
-    answer = str(result.content)
-    wants_spoiler = "yes" in answer.lower()
+    wants_spoiler = predict_spoiler(question)
     return {"spoiler_free": not wants_spoiler}
 
 # 스포일러 처리 노드: 줄거리를 스포일러 포함해서 반환

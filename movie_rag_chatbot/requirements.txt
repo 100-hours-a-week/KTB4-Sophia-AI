@@ -13,3 +13,5 @@ fastapi
 uvicorn
 streamlit
 markdown
+transformers
+torch
