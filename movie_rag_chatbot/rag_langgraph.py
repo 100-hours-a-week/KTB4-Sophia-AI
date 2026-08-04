@@ -112,7 +112,7 @@ def no_spoiler(state: State) -> dict:
     title = detect_title(question)
     if title:
         # 제목 감지 -> 그 영화 + 스포는 제외
-        docs = vectorstore.similarity_search(question, k=5, filter={"title_kor": title, "spoiler":False})
+        docs = vectorstore.similarity_search(question, k=5, filter={"$and": [{"title_kor": title}, {"spoiler":False}]})
     else:
         docs = vectorstore.similarity_search(question, k=5, filter={"spoiler": False})
     context = format_docs(docs)
