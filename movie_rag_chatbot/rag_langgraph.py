@@ -3,7 +3,7 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
-from config import CHROMA_DIR, GEMINI_API_KEY, DATA_DIR, ANTHROPIC_API_KEY, VOYAGE_API_KEY
+from config import CHROMA_DIR, DATA_DIR, ANTHROPIC_API_KEY, VOYAGE_API_KEY
 from langchain_chroma import Chroma
 from langchain_anthropic import ChatAnthropic
 import json, os
@@ -12,6 +12,8 @@ all_movies = []
 with open(os.path.join(DATA_DIR, "movies.jsonl"), encoding="utf-8") as f:
     for line in f:
         all_movies.append(json.loads(line))
+
+all_titles = [m["title_kor"] for m in all_movies]
 
 GENRES = ["액션", "모험", "애니메이션", "코미디", "범죄", "드라마",
           "가족", "판타지", "공포", "미스터리", "로맨스", "SF", "스릴러", "전쟁", "서부"]
@@ -33,6 +35,13 @@ def detect_genre(question):
             return g
     return None
 
+def detect_title(question):
+    # 질문에 포함된 영화 제목 찾기 (긴 제목 우선 -> 더 정확함)
+    matched = [t for t in all_titles if t and t in question]
+    if matched:
+        return max(matched, key=len)
+    return None
+
 def genre_search(genre):
     matched = [m for m in all_movies if genre in m["genres"]]
     matched = sorted(matched, key=lambda m: m["rating"], reverse=True)
@@ -51,11 +60,6 @@ class State(TypedDict):
     answer: str
 
 embeddings = VoyageAIEmbeddings(
-    model="voyage-4-lite",
-    api_key=VOYAGE_API_KEY,
-)
-
-model = VoyageAIEmbeddings(
     model="voyage-4-lite",
     api_key=VOYAGE_API_KEY,
 )
@@ -92,14 +96,25 @@ def classify(state: State) -> dict:
 # 스포일러 처리 노드: 줄거리를 스포일러 포함해서 반환
 def spoiler(state: State) -> dict:
     question = state["question"]
-    docs = vectorstore.similarity_search(question, k=5, filter=None)
+    title = detect_title(question)
+    if title:
+        # 제목 감지 -> 그 영화 청크만 가져오기 (plot 포함, filter로 title 지정하기)
+        docs = vectorstore.similarity_search(question, k=5, filter={"title_kor": title})
+    else:
+        # 제목 없으면 기존 벡터 검색
+        docs = vectorstore.similarity_search(question, k=5, filter=None)
     context = format_docs(docs)
     return {"context": context}
 
 # 스포일러 없이 처리 노드: 줄거리를 스포일러 없이 반환
 def no_spoiler(state: State) -> dict:
     question = state["question"]
-    docs = vectorstore.similarity_search(question, k=5, filter={"spoiler": False})
+    title = detect_title(question)
+    if title:
+        # 제목 감지 -> 그 영화 + 스포는 제외
+        docs = vectorstore.similarity_search(question, k=5, filter={"title_kor": title, "spoiler":False})
+    else:
+        docs = vectorstore.similarity_search(question, k=5, filter={"spoiler": False})
     context = format_docs(docs)
     return {"context": context}
 
