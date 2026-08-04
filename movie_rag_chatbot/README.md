@@ -8,21 +8,22 @@
 
 평소 영화를 틀어놓고 다른 일을 하다 보면 내용을 놓쳐 다시 보거나 꺼버리는 일이 많았다.
 그래서 좋아하는 장르를 골라 검색하고 줄거리를 미리 파악한 뒤 편하게 감상할 수 있는 도구가 있으면 좋겠다고 생각했다.
-스마트 TV에 "영화 추천해줘"라고 하면 대개 평점이나 인기 상위작만 보여주는데, 사용자의 요청 (장르, 분위, 소재)에 맞춰 필터링해 추천해주는 챗봇이 있으면 더 유용하겠다고 생각했다.
+스마트 TV에 "영화 추천해줘"라고 하면 대개 평점이나 인기 상위작만 보여주는데, 사용자의 요청 (장르, 분위기, 소재)에 맞춰 필터링해 추천해주는 챗봇이 있으면 더 유용하겠다고 생각했다.
 다만, 줄거리를 미리 알고 보기를 원하는 사람도 있고, 스포일러를 싫어하는 사람도 있어서 스포일러 수위를 사용자가 조절할 수 있도록 만들었다.
 
 ---
 
 ## 🛠️ 기술 스택
 
-- **LLM / 임베딩**: Google Gemini (`gemini-flash-latest`, `gemini-embedding-001`)
+- **LLM**: Claude Sonnet (답변 생성), 파인튜닝 KLUE-RoBERTa (스포일러 판단)
+- **임베딩**: Voyage AI (voyage-4-lite)
 - **벡터 DB**: ChromaDB
 - **프레임워크**: LangChain (LCEL), LangGraph (StateGraph)
 - **추적 및 모니터링**: LangSmith
 - **데이터 출처**: TMDB API, 위키백과 API
 - **백엔드**: FastAPI (REST API), Uvicorn
 - **프론트엔드**: HTML / CSS / JavaScript
-- **배포**: Docker, docker-compose, AWS EC2
+- **배포**: Docker, AWS EC2
 
 ---
 
@@ -42,9 +43,13 @@
 - `rag_langgraph.py`, `app_langgraph.py`: LangGraph (메인 버전)
 
 **웹 서비스, 배포** ✅ 완료
-- `api.py` - FastAPI 서버. `/chat`, `/chat`, `/chat/stream`, 프론트
+- `api.py` - FastAPI 서버. `/chat`, `/chat/stream`, 프론트
 - `index.html` - 웹 프론트엔드 (넷플릭스 스타일 채팅 UI, ASKFLIX)
 -  `Dockerfile`, `docker-compose.yml`: 컨테이너 빌드, 실행 설정
+
+**모델, 데이터**
+- `spoiler_model/` - 파인튜닝한 스포일러 판단 모델 (KLUE-RoBERTa)
+- `chroma/` - Voyage 임베딩으로 생성한 벡터 DB
 
 ---
 
@@ -55,13 +60,18 @@
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
-`.env` 생성 후 `TMDB_TOKEN`, `GEMINI_API_KEY` 입력하기
+`.env` 생성 후 아래 키 입력:
+- `TMDB_TOKEN` (데이터 수집)
+- `VOYAGE_API_KEY` (임베딩)
+- `ANTHROPIC_API_KEY` (답변 생성 - Claude)
+- `LANGSMITH_API_KEY` (추적용)
 
-**2. 데이터, 인덱스 준비**
+**2. 데이터, 인덱스, 모델 준비**
 ```bash
 python collect_data.py
 python build_index.py
 ```
+- `spoiler_model/` 폴더 필요 (스포일러 판단용 파인튜닝 모델, 별도 학습)
 
 **3. 실행**
 ```bash
