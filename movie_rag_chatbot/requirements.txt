@@ -6,6 +6,7 @@ langchain
 langchain-google-genai
 langchain-chroma
 langchain-anthropic
+langchain-voyageai
 langsmith
 langgraph
 fastapi

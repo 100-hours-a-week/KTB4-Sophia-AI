@@ -1,7 +1,8 @@
+from langchain_voyageai import VoyageAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
-from config import CHROMA_DIR, GEMINI_API_KEY, DATA_DIR, ANTHROPIC_API_KEY
+from config import CHROMA_DIR, GEMINI_API_KEY, DATA_DIR, ANTHROPIC_API_KEY, VOYAGE_API_KEY
 from langchain_chroma import Chroma
 from langchain_anthropic import ChatAnthropic
 import json, os
@@ -37,9 +38,9 @@ class State(TypedDict):
     # 최종 답변
     answer: str
 
-embeddings = GoogleGenerativeAIEmbeddings(
-    model="models/gemini-embedding-001",
-    google_api_key=GEMINI_API_KEY,
+embeddings = VoyageAIEmbeddings(
+    model="voyage-4-lite",
+    api_key=VOYAGE_API_KEY,
 )
 
 model = ChatGoogleGenerativeAI(
