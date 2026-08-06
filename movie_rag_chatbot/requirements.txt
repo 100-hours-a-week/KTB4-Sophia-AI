@@ -1,3 +1,5 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
 chromadb
 google-genai
 requests
@@ -14,4 +16,3 @@ uvicorn
 streamlit
 markdown
 transformers
-torch
