@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>영화 추천 챗봇</title>
+<title>영화 검색 챗봇</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -82,7 +82,7 @@
   }
   .history-section::-webkit-scrollbar { width: 4px; }
   .history-section::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-  
+
   .history-title {
     padding: 0 24px;
     color: #808080;
@@ -95,7 +95,7 @@
     flex-direction: column;
   }
   .history-item {
-    padding: 10px 24px 10px 21px; 
+    padding: 10px 24px 10px 21px;
     color: #b3b3b3;
     font-size: 14px;
     cursor: pointer;
@@ -151,7 +151,7 @@
   #home-view { display: block; }
   .page-title { font-size: 28px; font-weight: bold; margin-bottom: 8px; }
   .page-subtitle { color: #b3b3b3; font-size: 15px; margin-bottom: 24px; }
-  
+
   /* 예시 질문 컨테이너 */
   .examples-container {
     display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 40px;
@@ -196,7 +196,7 @@
   .chat-row { display: flex; width: 100%; }
   .chat-row.user { justify-content: flex-end; }
   .chat-row.bot { justify-content: flex-start; gap: 16px; }
-  
+
   .bot-avatar {
     width: 36px; height: 36px;
     background: #000; border-radius: 50%;
@@ -204,7 +204,7 @@
     display: flex; justify-content: center; align-items: center;
     flex-shrink: 0;
   }
-  
+
   .chat-bubble { max-width: 70%; font-size: 15px; line-height: 1.6; }
   .chat-row.user .chat-bubble {
     background: #E50914; color: #fff;
@@ -267,7 +267,7 @@
   <!-- 왼쪽 사이드바 -->
   <aside class="sidebar">
     <div class="logo">ASKFLIX</div>
-    
+
     <!-- 새로운 채팅 버튼 -->
     <button class="new-chat-btn" onclick="startNewChat()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -283,7 +283,7 @@
       <div class="menu-item"><span>추천</span></div>
       <div class="menu-item"><span>마이 리스트</span></div>
     </div>
-    
+
     <!-- 히스토리 영역 -->
     <div class="history-section">
       <div class="history-title">히스토리</div>
@@ -309,12 +309,12 @@
   <!-- 메인 컨텐츠 -->
   <main class="main-content">
     <div class="content-area" id="content-area">
-      
+
       <!-- 초기 홈 뷰 -->
       <div id="home-view">
-        <h1 class="page-title">영화 추천 챗봇</h1>
+        <h1 class="page-title">영화 검색 챗봇</h1>
         <p class="page-subtitle">좋아할 만한 영화를 찾아드릴게요.</p>
-        
+
         <!-- 추가된 예시 질문 영역 -->
         <div class="examples-container">
           <button class="example-btn" onclick="send('긴장감 넘치는 스릴러 영화 추천해줘')">긴장감 넘치는 스릴러 영화 추천해줘</button>
@@ -358,15 +358,8 @@
       </div>
 
       <!-- 채팅 뷰 -->
-      <div id="chat-view">
-        <div class="chat-row bot">
-          <div class="bot-avatar">N</div>
-          <div class="chat-bubble">
-            <p>안녕하세요! 어떤 영화를 찾고 계신가요?</p>
-          </div>
-        </div>
-      </div>
-      
+      <div id="chat-view"></div>
+
     </div>
 
     <!-- 하단 입력창 -->
@@ -385,107 +378,96 @@
   const homeView = document.getElementById("home-view");
   const chatView = document.getElementById("chat-view");
   const historyList = document.getElementById("history-list");
-  
-  let isChatActive = false;
-  let isFirstMessageInSession = true; // 현재 세션의 첫 메시지인지 추적
 
-  // 새로운 채팅 시작 (화면 초기화)
+  const GREETING = "안녕하세요! 어떤 영화를 찾고 계신가요?";
+
+  // ===== 세션 메모리 (새로고침하면 사라짐, DB 없음) =====
+  const conversations = {};   // id -> { id, title, messages: [{role, text}] }
+  let currentId = null;       // 현재 열려있는 대화 id (null이면 새 채팅 대기)
+  let convCounter = 0;
+
+  // 새로운 채팅 시작 (홈 화면으로)
   function startNewChat() {
-    isChatActive = false;
-    isFirstMessageInSession = true; // 세션 초기화
+    currentId = null;
     homeView.style.display = "block";
     chatView.style.display = "none";
-    
-    // 채팅 내용 초기화 (기본 인사말만 남김)
-    chatView.innerHTML = `
-      <div class="chat-row bot">
-        <div class="bot-avatar">N</div>
-        <div class="chat-bubble"><p>안녕하세요! 어떤 영화를 찾고 계신가요?</p></div>
-      </div>
-    `;
-    
-    // 사이드바 활성화 표시 해제
     document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
   }
 
-  // 히스토리에 새 항목 추가
-  function addToHistory(text) {
-    document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
-    
-    const item = document.createElement("div");
-    item.className = "history-item active";
-    item.textContent = text;
-    
-    // 리스트의 맨 위에 추가
-    historyList.insertBefore(item, historyList.firstChild);
+  // 사이드바에서 현재 대화만 active 표시
+  function markActive(id) {
+    document.querySelectorAll('.history-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.id === id);
+    });
   }
 
-  function addBubble(role, text) {
+  // 말풍선 DOM 그리기 (저장은 안 함)
+  function renderBubble(role, text) {
     const row = document.createElement("div");
     row.className = "chat-row " + role;
-    
     if (role === "bot") {
       row.innerHTML = `<div class="bot-avatar">N</div><div class="chat-bubble">${marked.parse(text)}</div>`;
     } else {
       row.innerHTML = `<div class="chat-bubble">${text}</div>`;
     }
-    
     chatView.appendChild(row);
     contentArea.scrollTop = contentArea.scrollHeight;
     return row;
   }
 
-  function addMovieCardsBubble(text, movies) {
-    const row = document.createElement("div");
-    row.className = "chat-row bot";
-    let cardsHTML = movies.map(movie => `
-      <div class="movie-rec-card">
-        <img src="${movie.posterPath}" class="movie-rec-poster" alt="${movie.title}">
-        <div class="movie-rec-info">
-          <div class="movie-rec-title">${movie.title}</div>
-          <div class="movie-rec-meta">${movie.year} · ${movie.genre}<br>⭐ ${movie.rating}</div>
-          <div class="movie-rec-desc">${movie.desc}</div>
-        </div>
-      </div>
-    `).join("");
-
-    row.innerHTML = `
-      <div class="bot-avatar">N</div>
-      <div class="chat-bubble">
-        <p>${text}</p>
-        <div class="movie-recommendation-list">${cardsHTML}</div>
-      </div>
-    `;
-    chatView.appendChild(row);
+  // 채팅뷰를 특정 대화 내용으로 다시 그림 (히스토리 클릭 시)
+  function renderConversation(id) {
+    currentId = id;
+    homeView.style.display = "none";
+    chatView.style.display = "flex";
+    chatView.innerHTML = "";
+    renderBubble("bot", GREETING);                       // 인사말 먼저
+    conversations[id].messages.forEach(m => renderBubble(m.role, m.text));
+    markActive(id);
     contentArea.scrollTop = contentArea.scrollHeight;
   }
 
-  // 직접 질문 텍스트를 파라미터로 받을 수 있게 설정 (예시 버튼용)
+  // 사이드바 히스토리에 새 대화 등록
+  function addHistoryItem(id, title) {
+    const item = document.createElement("div");
+    item.className = "history-item";
+    item.dataset.id = id;
+    item.textContent = title;
+    item.onclick = () => renderConversation(id);         // 클릭하면 그 대화로 복원
+    historyList.insertBefore(item, historyList.firstChild);
+  }
+
+  // 질문 보내기 (예시 버튼은 텍스트를 인자로 넘김)
   async function send(queryText = null) {
     const input = document.getElementById("input");
     const q = queryText || input.value.trim();
     if (!q) return;
     input.value = "";
 
-    // 새 대화 화면으로 전환
-    if (!isChatActive) {
+    // 새 채팅 상태면 새 대화 생성
+    if (currentId === null) {
+      convCounter++;
+      const id = "conv-" + convCounter;
+      conversations[id] = { id, title: q, messages: [] };  // 첫 질문을 제목으로
+      currentId = id;
+      addHistoryItem(id, q);
       homeView.style.display = "none";
       chatView.style.display = "flex";
-      isChatActive = true;
+      chatView.innerHTML = "";
+      renderBubble("bot", GREETING);
     }
+    markActive(currentId);
 
-    // 세션의 첫 질문일 경우 히스토리에 등록
-    if (isFirstMessageInSession) {
-      addToHistory(q);
-      isFirstMessageInSession = false;
-    }
+    // 사용자 메시지: 저장 + 표시
+    conversations[currentId].messages.push({ role: "user", text: q });
+    renderBubble("user", q);
 
-    addBubble("user", q);
-
-    const row = addBubble("bot", "");
-    const bubbleTextContainer = row.querySelector(".chat-bubble");
-    bubbleTextContainer.innerHTML = '<span class="loading"></span>';
+    // 봇 말풍선 자리 만들고 로딩
+    const row = renderBubble("bot", "");
+    const bubble = row.querySelector(".chat-bubble");
+    bubble.innerHTML = '<span class="loading"></span>';
     let fullText = "", first = true;
+    const convId = currentId;   // 스트리밍 도중 대화가 바뀌어도 올바른 곳에 저장
 
     try {
       const res = await fetch("/chat/stream", {
@@ -497,14 +479,18 @@
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        if (first) { bubbleTextContainer.innerHTML = ""; first = false; }
+        if (first) { bubble.innerHTML = ""; first = false; }
         fullText += decoder.decode(value);
-        bubbleTextContainer.innerHTML = marked.parse(fullText);
+        bubble.innerHTML = marked.parse(fullText);
         contentArea.scrollTop = contentArea.scrollHeight;
       }
     } catch (e) {
-      bubbleTextContainer.innerHTML = "⚠️ 서버에 연결하지 못했어요.";
+      fullText = "⚠️ 서버에 연결하지 못했어요.";
+      bubble.innerHTML = fullText;
     }
+
+    // 봇 응답 저장 (히스토리 복원용)
+    conversations[convId].messages.push({ role: "bot", text: fullText });
   }
 </script>
 </body>
