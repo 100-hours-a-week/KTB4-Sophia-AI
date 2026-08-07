@@ -6,7 +6,7 @@ from fastapi.responses import StreamingResponse
 from rag_langgraph import answer_stream
 from fastapi.responses import FileResponse
 import os, requests
-from config import TMDB_API_KEY
+from config import TMDB_TOKEN
 
 app = FastAPI()
 
@@ -41,13 +41,13 @@ def chat_stream(req: ChatRequest):
 def home():
     return FileResponse("index.html")
 
-TMDB_API_KEY = os.getenv("TMDB_API_KEY")
+TMDB_TOKEN = os.getenv("TMDB_TOKEN")
 
 @app.get("/poster")
 def poster(title: str):
     r = requests.get(
         "https://api.themoviedb.org/3/search/movie",
-        params={"api_key": TMDB_API_KEY, "query": title, "language": "ko-KR"},
+        params={"api_key": TMDB_TOKEN, "query": title, "language": "ko-KR"},
     )
     results = r.json().get("results", [])
     path = results[0].get("poster_path") if results else None
