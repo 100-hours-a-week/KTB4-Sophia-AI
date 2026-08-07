@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from rag_langgraph import answer_stream
 from fastapi.responses import FileResponse
+import os, requests
+from config import TMDB_API_KEY
 
 app = FastAPI()
 
@@ -38,3 +40,15 @@ def chat_stream(req: ChatRequest):
 @app.get("/")
 def home():
     return FileResponse("index.html")
+
+TMDB_API_KEY = os.getenv("TMDB_API_KEY")
+
+@app.get("/poster")
+def poster(title: str):
+    r = requests.get(
+        "https://api.themoviedb.org/3/search/movie",
+        params={"api_key": TMDB_API_KEY, "query": title, "language": "ko-KR"},
+    )
+    results = r.json().get("results", [])
+    path = results[0].get("poster_path") if results else None
+    return {"url": f"https://image.tmdb.org/t/p/w500{path}" if path else None}

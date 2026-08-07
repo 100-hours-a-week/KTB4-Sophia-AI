@@ -381,6 +381,32 @@
 
   const GREETING = "안녕하세요! 어떤 영화를 찾고 계신가요?";
 
+  // 제목으로 TMDB 검색 → 포스터 이미지 URL 반환 (없으면 null)
+  async function fetchPoster(title) {
+    try {
+      const res = await fetch(`/poster?title=${encodeURIComponent(title)}`);
+      const data = await res.json();
+      return data.url;   // null이면 포스터 없음
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // 홈 화면 '추천 영화' 행에 포스터 채우기
+  async function loadTopPosters() {
+    const cards = document.querySelectorAll('#home-view .poster-card');
+    for (const card of cards) {
+      const title = card.querySelector('.poster-title').textContent.trim();
+      const url = await fetchPoster(title);
+      if (url) {
+        const imgDiv = card.querySelector('.poster-img');
+        imgDiv.style.backgroundImage = `url('${url}')`;
+        imgDiv.style.backgroundSize = 'cover';
+        imgDiv.style.backgroundPosition = 'center';
+      }
+    }
+  }
+
   // ===== 세션 메모리 (새로고침하면 사라짐, DB 없음) =====
   const conversations = {};   // id -> { id, title, messages: [{role, text}] }
   let currentId = null;       // 현재 열려있는 대화 id (null이면 새 채팅 대기)
@@ -492,6 +518,7 @@
     // 봇 응답 저장 (히스토리 복원용)
     conversations[convId].messages.push({ role: "bot", text: fullText });
   }
+  loadTopPosters();
 </script>
 </body>
 </html>
