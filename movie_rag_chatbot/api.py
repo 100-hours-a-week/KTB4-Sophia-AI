@@ -47,7 +47,8 @@ TMDB_TOKEN = os.getenv("TMDB_TOKEN")
 def poster(title: str):
     r = requests.get(
         "https://api.themoviedb.org/3/search/movie",
-        params={"api_key": TMDB_TOKEN, "query": title, "language": "ko-KR"},
+        params={"query": title, "language": "ko-KR"},
+        headers={"Authorization": f"Bearer {TMDB_TOKEN}"},   # 헤더로 인증
     )
     results = r.json().get("results", [])
     path = results[0].get("poster_path") if results else None
